@@ -3,7 +3,9 @@
     <item
         android:drawable="@color/colorPrimary"/>
 
-    <item>
+    <item 
+	    android:left="60dp"
+        android:right="60dp">
         <bitmap
             android:gravity="center"
             android:src="@drawable/icon1"/>
