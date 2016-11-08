@@ -2,7 +2,31 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:opencv="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
+    android:orientation="vertical"
     android:layout_height="match_parent" >
+
+    <SeekBar
+        style="@style/Widget.AppCompat.SeekBar"
+        android:id="@+id/seek1"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:max="2"
+        android:progress="1"
+        android:layout_margin="20dp" />
+
+    <SeekBar
+        style="@style/Widget.AppCompat.SeekBar"
+        android:id="@+id/seek2"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_margin="20dp" />
+
+    <SeekBar
+        style="@style/Widget.AppCompat.SeekBar"
+        android:id="@+id/seek3"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_margin="20dp" />
 
     <org.opencv.android.JavaCameraView
         android:layout_width="fill_parent"
@@ -10,6 +34,7 @@
         android:visibility="gone"
         android:id="@+id/image_manipulations_activity_surface_view"
         opencv:show_fps="true"
-        opencv:camera_id="any" />
+        opencv:camera_id="back" />
+
 
 </LinearLayout>
