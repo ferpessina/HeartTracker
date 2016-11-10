@@ -7,4 +7,6 @@
     <color name="textPrimary">#ffffff</color>
     <color name="textSecondary">#88ffffff</color>
     <color name="white">#ffffff</color>
+    <color name="greyBackground">#bdbdbd</color>
+    <color name="darkBackground">#263238</color>
 </resources>

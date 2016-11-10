@@ -86,4 +86,13 @@
         android:layout_below="@id/linearLayout1"
         android:layout_centerHorizontal="true"/>
 
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/wrist1"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/imageView"
+        android:id="@+id/imageView2" />
+
 </RelativeLayout>

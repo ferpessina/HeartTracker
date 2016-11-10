@@ -1,29 +1,29 @@
 package com.example.fernandopessina.hearttracker;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.android.Utils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class MeasureFragment extends Fragment{
+public class Main2Activity extends AppCompatActivity {
 
     private int var1 = 0;
     private int var2 = 0;
@@ -34,6 +34,8 @@ public class MeasureFragment extends Fragment{
     private Mat gray;
 
     private ImageView imView;
+    private ImageView imView2;
+    private static final String TAG = "main2";
 
     private SeekBar sBar1;
     private SeekBar sBar2;
@@ -43,84 +45,98 @@ public class MeasureFragment extends Fragment{
     private TextView tv2;
     private TextView tv3;
 
-    public MeasureFragment() {
-        // Required empty public constructor
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+        if (!OpenCVLoader.initDebug()) {
+            Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
+        } else {
+            Log.d(TAG, "OpenCV library found inside package. Using it!");
+            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
     }
 
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+                {
+                    Log.i(TAG, "OpenCV loaded successfully");
+                    init();
+                } break;
+                default:
+                {
+                    super.onManagerConnected(status);
+                } break;
+            }
+        }
+    };
+
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main2);
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    private void init(){
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.measure_fragment, container, false);
-        imView = (ImageView) view.findViewById(R.id.imageView);
-        sBar1 = (SeekBar) view.findViewById(R.id.seekBar);
-        sBar2 = (SeekBar) view.findViewById(R.id.seekBar2);
-        sBar3 = (SeekBar) view.findViewById(R.id.seekBar3);
-        sBar1.setMax(255);
-        sBar2.setMax(255);
+        imView = (ImageView) findViewById(R.id.imageView);
+        imView2 = (ImageView) findViewById(R.id.imageView2);
+        sBar1 = (SeekBar) findViewById(R.id.seekBar);
+        sBar2 = (SeekBar) findViewById(R.id.seekBar2);
+        sBar3 = (SeekBar) findViewById(R.id.seekBar3);
+        sBar1.setMax(2);
+        sBar1.setProgress(2);
+        sBar2.setMax(245);
+        sBar1.setProgress(162);
         sBar3.setMax(255);
+        sBar1.setProgress(139);
 
-        tv1 = (TextView) view.findViewById(R.id.textView);
-        tv2 = (TextView) view.findViewById(R.id.textView2);
-        tv3 = (TextView) view.findViewById(R.id.textView3);
+        tv1 = (TextView) findViewById(R.id.textView);
+        tv2 = (TextView) findViewById(R.id.textView2);
+        tv3 = (TextView) findViewById(R.id.textView3);
 
         sBar1.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 updateImage();
             }
-
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
             }
-
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-
             }
         });
-
         sBar2.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 updateImage();
             }
-
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
             }
-
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-
             }
         });
-
         sBar3.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 updateImage();
             }
-
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
             }
-
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-
             }
         });
 
-        return view;
+        updateImage();
     }
 
     private void updateImage(){
@@ -132,12 +148,19 @@ public class MeasureFragment extends Fragment{
         tv2.setText(String.valueOf(var2));
         tv3.setText(String.valueOf(var3));
 
-        Bitmap bm = BitmapFactory.decodeResource(getResources(), R.drawable.wrist1);
+        Mat rgba = null;
+        try {
+            rgba = Utils.loadResource(this, R.drawable.wrist1, CvType.CV_8UC4);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        Mat rgba = new Mat (bm.getWidth(), bm.getHeight(), CvType.CV_8UC1);
-
-        Utils.bitmapToMat(bm, rgba);
-
+        Mat rgba2 = null;
+        try {
+            rgba2 = Utils.loadResource(this, R.drawable.wrist1, CvType.CV_8UC4);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         Imgproc.cvtColor(rgba,rgba,Imgproc.COLOR_BGR2HSV);
 
         List<Mat> planes = new ArrayList<>();
@@ -148,18 +171,28 @@ public class MeasureFragment extends Fragment{
 
         Imgproc.equalizeHist(gray,gray);
 
-        Imgproc.threshold(gray, gray, var2, 255, Imgproc.THRESH_BINARY);
+        Imgproc.threshold(gray, gray, var2+10, 255, Imgproc.THRESH_TOZERO_INV);
 
         Imgproc.threshold(gray, gray, var2, 255, Imgproc.THRESH_BINARY);
+
+        //Imgproc.equalizeHist(gray,gray);
 
         Imgproc.cvtColor(gray, rgba, Imgproc.COLOR_GRAY2RGBA, 4);
+
+        Imgproc.cvtColor(rgba2, rgba2, Imgproc.COLOR_BGR2RGB);
 
         for(Mat m : planes)
             m.release();
 
         // convert to bitmap:
+        Bitmap bm = Bitmap.createBitmap(rgba.cols(), rgba.rows(),Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(rgba, bm);
-
+        // find the imageview and draw it!
         imView.setImageBitmap(bm);
+
+        Bitmap bm2 = Bitmap.createBitmap(rgba2.cols(), rgba2.rows(),Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(rgba2, bm2);
+        // find the imageview and draw it!
+        imView2.setImageBitmap(bm2);
     }
 }

@@ -1,0 +1,51 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:padding="4dp"
+    android:layout_height="48dp">
+
+    <TextView
+        android:text="80"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:id="@+id/bpm"/>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
+
+        <ProgressBar
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_alignParentBottom="true"
+            android:id="@+id/bpmProgBar" />
+
+        <TextView
+            android:layout_height="20dp"
+            android:layout_width="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_alignParentStart="true"
+            android:layout_above="@id/bpmProgBar"
+            android:gravity="start"
+            android:id="@+id/bpmType"
+            android:text="General"/>
+
+        <TextView
+            android:layout_height="20dp"
+            android:layout_width="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:layout_alignParentEnd="true"
+            android:id="@+id/bpmDate"
+            android:layout_above="@id/bpmProgBar"
+            android:gravity="end"
+            android:text="11/5/16"/>
+
+    </RelativeLayout>
+
+</LinearLayout>
