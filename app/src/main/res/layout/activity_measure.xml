@@ -1,40 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:opencv="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:orientation="vertical"
     android:layout_height="match_parent" >
 
-    <SeekBar
-        style="@style/Widget.AppCompat.SeekBar"
-        android:id="@+id/seek1"
+    <com.jjoe64.graphview.GraphView
         android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:max="2"
-        android:progress="1"
-        android:layout_margin="20dp" />
+        android:id="@+id/graphBpm"
+        android:layout_height="160dip" />
 
-    <SeekBar
-        style="@style/Widget.AppCompat.SeekBar"
-        android:id="@+id/seek2"
+    <ProgressBar
+        style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:layout_margin="20dp" />
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:id="@+id/progressBar2" />
 
-    <SeekBar
-        style="@style/Widget.AppCompat.SeekBar"
-        android:id="@+id/seek3"
-        android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:layout_margin="20dp" />
+    <TextView
+        android:text="TextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/greyBackground"
+        android:layout_above="@+id/progressBar2"
+        android:id="@+id/textViewBpm" />
 
     <org.opencv.android.JavaCameraView
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/progressBar2"
         android:visibility="gone"
         android:id="@+id/image_manipulations_activity_surface_view"
         opencv:show_fps="true"
-        opencv:camera_id="back" />
-
-
-</LinearLayout>
+        opencv:camera_id="back"/>
+</RelativeLayout>
