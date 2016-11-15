@@ -4,8 +4,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
+    <android.support.v7.widget.Toolbar
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:id="@+id/toolbarMeasure"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:title="@string/heartrate_measure"
+        android:layout_alignParentTop="true"
+        android:background="?attr/colorPrimary" />
+
     <com.jjoe64.graphview.GraphView
         android:layout_width="match_parent"
+        android:layout_below="@+id/toolbarMeasure"
         android:id="@+id/graphBpm"
         android:layout_height="160dip" />
 
@@ -13,16 +23,8 @@
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
+        android:layout_below="@id/graphBpm"
         android:id="@+id/progressBar2" />
-
-    <TextView
-        android:text="TextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@color/greyBackground"
-        android:layout_above="@+id/progressBar2"
-        android:id="@+id/textViewBpm" />
 
     <org.opencv.android.JavaCameraView
         android:layout_width="wrap_content"
@@ -32,4 +34,67 @@
         android:id="@+id/image_manipulations_activity_surface_view"
         opencv:show_fps="true"
         opencv:camera_id="back"/>
+
+    <ProgressBar
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/progressBar2"
+        android:id="@+id/measureProgress" />
+
+    <RadioGroup
+        android:layout_width="match_parent"
+        android:id="@+id/typesGroup"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/measureProgress"
+        android:layout_alignParentBottom="true" >
+
+        <TextView
+            android:id="@+id/radioGroupTitle"
+            android:padding="10dp"
+            android:background="@color/colorPrimary"
+            android:textColor="@color/white"
+            android:text="@string/choose_measurement_type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <RadioButton
+            android:text="@string/resting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:id="@+id/radioButton"
+            android:layout_weight="1" />
+
+        <RadioButton
+            android:text="@string/warming_up"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/radioButton2"
+            android:layout_weight="1" />
+
+        <RadioButton
+            android:text="@string/exercise_75"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/radioButton3"
+            android:layout_weight="1" />
+
+        <RadioButton
+            android:text="@string/exercise_100"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/radioButton4"
+            android:layout_weight="1" />
+
+        <RadioButton
+            android:text="@string/after_exercise"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/radioButton5"
+            android:layout_weight="1" />
+    </RadioGroup>
+
 </RelativeLayout>

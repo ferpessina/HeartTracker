@@ -4,10 +4,13 @@ import com.example.fernandopessina.hearttracker.model.BpmRecord;
 import com.example.fernandopessina.hearttracker.model.MonthlyRecord;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -31,6 +34,62 @@ public final class ConversionUtil {
             ret.add(new MonthlyRecord(s));
         }
         return ret;
+    }
+
+    public static String getDateString(){
+        String date = "";
+        Calendar cal = new GregorianCalendar(Locale.getDefault());
+        date+=(String.valueOf(cal.get(Calendar.DAY_OF_MONTH)));
+        date+=("/");
+        date+=(String.valueOf(cal.get(Calendar.MONTH)+1));
+        date+=("/");
+        date+=(String.valueOf(cal.get(Calendar.YEAR)));
+        return date;
+    }
+
+    public static String getMonthString(){
+        Calendar cal = new GregorianCalendar(Locale.getDefault());
+        String month = "";
+        switch(cal.get(Calendar.MONTH)){
+            case Calendar.JANUARY:
+                month = "JANUARY ";
+                break;
+            case Calendar.FEBRUARY:
+                month = "FEBRUARY ";
+                break;
+            case Calendar.MARCH:
+                month = "MARCH ";
+                break;
+            case Calendar.APRIL:
+                month = "APRIL ";
+                break;
+            case Calendar.MAY:
+                month = "MAY ";
+                break;
+            case Calendar.JUNE:
+                month = "JUNE ";
+                break;
+            case Calendar.JULY:
+                month = "JULY ";
+                break;
+            case Calendar.AUGUST:
+                month = "AUGUST ";
+                break;
+            case Calendar.SEPTEMBER:
+                month = "SEPTEMBER ";
+                break;
+            case Calendar.OCTOBER:
+                month = "OCTOBER ";
+                break;
+            case Calendar.NOVEMBER:
+                month = "NOVEMBER ";
+                break;
+            case Calendar.DECEMBER:
+                month = "DECEMBER ";
+                break;
+        }
+        month+=String.valueOf(cal.get(Calendar.YEAR));
+        return month;
     }
 
     public static int monthToInt(String m){

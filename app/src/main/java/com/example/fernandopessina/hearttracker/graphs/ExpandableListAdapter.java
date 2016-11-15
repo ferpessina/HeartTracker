@@ -21,7 +21,8 @@ import java.util.List;
 public class ExpandableListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public static final int HEADER = 0;
     public static final int CHILD = 1;
-    public static final int MIN_BPM = 60;
+    public static final int MIN_BPM = 40;
+    public static final int MAX_BPM = 180;
 
     private List<Item> data;
 
@@ -95,7 +96,7 @@ public class ExpandableListAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 final ListMeasurementViewHolder itemCont = (ListMeasurementViewHolder) holder;
                 itemCont.referralItem = item;
                 itemCont.bpmProgBar.setProgress(item.bpm-MIN_BPM);
-                itemCont.bpmProgBar.setMax(100-MIN_BPM);
+                itemCont.bpmProgBar.setMax(MAX_BPM-MIN_BPM);
                 itemCont.bpm.setText(String.valueOf(item.bpm));
                 itemCont.date.setText(item.date);
                 itemCont.type.setText(item.mType);

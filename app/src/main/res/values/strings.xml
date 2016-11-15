@@ -1,16 +1,19 @@
 <resources>
     <string name="app_name">HeartTracker</string>
     <string name="title_activity_main">HeartTracker</string>
+    <string name="heartrate_measure">HeartRate Measure</string>
+    <string name="measureCanceled">BPM measurement canceled</string>
+    <string name="measureResp1">Measured </string>
+    <string name="measureResp2">BPMs</string>
+    <string name="choose_measurement_type">Choose measurement type</string>
+    <string name="resting">Resting</string>
+    <string name="warming_up">Warming up</string>
+    <string name="exercise_75">Exercise 75%</string>
+    <string name="exercise_100">Exercise 100%</string>
+    <string name="after_exercise">After Exercise</string>
+    <string name="delete_history">Delete History</string>
+    <string name="filter">Filter</string>
+    <string name="menu_all">All</string>
+    <string name="filter_measurements">Filter measurements</string>
 
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="hello_world">Hello world!!</string>
-    <string name="first">first</string>
-    <string name="last">last</string>
-    <string name="history_title">History</string>
-    <string name="measure_title">Measure</string>
-    <string name="picture">Picture</string>
-    <string name="description_info">description info</string>
-    <string name="intro_message">intro message</string>
-
-    <string name="take_picture">Take picture</string>
 </resources>

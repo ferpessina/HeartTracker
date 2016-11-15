@@ -4,12 +4,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.example.fernandopessina.hearttracker.graphs.ExpandableListAdapter;
@@ -22,6 +28,7 @@ import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
+import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,6 +40,14 @@ public class MainActivity extends AppCompatActivity {
     public static final String STORAGE_NAME = "HRHist";
     private Toolbar toolbar;
     private List<MonthlyRecord> months;
+    private int filterState = 0;
+    private static final int FILTER_ALL = 0;
+    private static final int FILTER_REST = 1;
+    private static final int FILTER_WARM = 2;
+    private static final int FILTER_75 = 3;
+    private static final int FILTER_100 = 4;
+    private static final int FILTER_AFT_EX = 5;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,19 +58,7 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        // Restore preferences
-        SharedPreferences settings = getSharedPreferences(STORAGE_NAME, 0);
-        Set<String> monthsString = settings.getStringSet("months", null);
-        if(monthsString == null){
-            months = fillHistWithGarbage();
-        }else {
-            months = ConversionUtil.toMonthlyRecordList(monthsString);
-            for (MonthlyRecord m : months) {
-                List<BpmRecord> entries = ConversionUtil.toRecordsList(settings.getStringSet(m.getName(), new HashSet<String>()));
-                m.setEntries(entries);
-            }
-        }
-
+        loadData();
         loadViews();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -65,22 +68,87 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Context context = getApplicationContext();
                 Intent intent = new Intent(context, MeasureActivity.class);
-                startActivity(intent);
-//                if(months.size() == 0){
-//                    months = fillHistWithGarbage();
-//                }else{
-//                    months = new ArrayList<>();
-//                    SharedPreferences settings = getSharedPreferences(STORAGE_NAME, 0);
-//                    SharedPreferences.Editor editor = settings.edit();
-//                    editor.clear();
-//                    editor.apply();
-//                }
-//                loadViews();
+                startActivityForResult(intent, 2);//random request code
             }
         });
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        super.onActivityResult(requestCode, resultCode, data);
+        // check if the request code is same as what is passed  here it is 2
+
+        if(resultCode == RESULT_OK) {
+            String message = data.getStringExtra("MESSAGE");
+            CoordinatorLayout coordinator = (CoordinatorLayout) findViewById(R.id.coordinatorMain);
+            Snackbar snackbar = Snackbar.make(coordinator, message, Snackbar.LENGTH_LONG);
+            snackbar.show();
+        }else{
+            String message = getString(R.string.measureCanceled);
+            CoordinatorLayout coordinator = (CoordinatorLayout) findViewById(R.id.coordinatorMain);
+            Snackbar snackbar = Snackbar.make(coordinator, message, Snackbar.LENGTH_LONG);
+            snackbar.show();
+        }
+
+    }
+
+    private void loadData(){
+        // Restore preferences
+        SharedPreferences settings = getSharedPreferences(STORAGE_NAME, 0);
+        Set<String> monthsString = settings.getStringSet("months", null);
+        if(monthsString != null) {
+            months = ConversionUtil.toMonthlyRecordList(monthsString);
+            for (MonthlyRecord m : months) {
+                List<BpmRecord> entries = ConversionUtil.toRecordsList(settings.getStringSet(m.getName(), new HashSet<String>()));
+                m.setEntries(entries);
+            }
+        }else{
+            months = new ArrayList<>();
+        }
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        loadData();
+        loadViews();
+    }
+
     private void loadViews(){
+        RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.history);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        List<ExpandableListAdapter.Item> data = new ArrayList<>();
+
+        Collections.sort(months, new MonthlyRecordComparator());
+        for(MonthlyRecord m : months){
+            ExpandableListAdapter.Item month = new ExpandableListAdapter.Item(ExpandableListAdapter.HEADER, m.getName(), m.getAverage());
+            List<BpmRecord> entries = m.getEntries();
+            List<BpmRecord> filteredEntries = new ArrayList<>();
+            for(BpmRecord r : entries){
+                int type = 0;
+                if(r.getType().equals(getString(R.string.resting)))
+                    type = FILTER_REST;
+                if(r.getType().equals(getString(R.string.warming_up)))
+                    type = FILTER_WARM;
+                if(r.getType().equals(getString(R.string.exercise_75)))
+                    type = FILTER_75;
+                if(r.getType().equals(getString(R.string.exercise_100)))
+                    type = FILTER_100;
+                if(r.getType().equals(getString(R.string.after_exercise)))
+                    type = FILTER_AFT_EX;
+                if(type==filterState || filterState == 0)
+                    filteredEntries.add(r);
+            }
+            if(filteredEntries.size()>0){
+                data.add(month);
+                for(BpmRecord r : filteredEntries){
+                    data.add(new ExpandableListAdapter.Item(ExpandableListAdapter.CHILD, r.getBpm(), r.getType(), r.getDate()));
+                }
+            }
+        }
+        mRecyclerView.setAdapter(new ExpandableListAdapter(data));
+
         List<Integer> values = new ArrayList<>();
         Collections.sort(months, new MonthlyRecordComparator());
         int average = 0;
@@ -89,9 +157,22 @@ public class MainActivity extends AppCompatActivity {
             m.calculateAverage();
             List<BpmRecord> entries = m.getEntries();
             for(BpmRecord r : entries){
-                values.add(r.getBpm());
-                average+=r.getBpm();
-                i++;
+                int type = 0;
+                if(r.getType().equals(getString(R.string.resting)))
+                    type = FILTER_REST;
+                if(r.getType().equals(getString(R.string.warming_up)))
+                    type = FILTER_WARM;
+                if(r.getType().equals(getString(R.string.exercise_75)))
+                    type = FILTER_75;
+                if(r.getType().equals(getString(R.string.exercise_100)))
+                    type = FILTER_100;
+                if(r.getType().equals(getString(R.string.after_exercise)))
+                    type = FILTER_AFT_EX;
+                if(type==filterState || filterState == 0){
+                    values.add(r.getBpm());
+                    average+=r.getBpm();
+                    i++;
+                }
             }
         }
         if(i>0)
@@ -126,89 +207,76 @@ public class MainActivity extends AppCompatActivity {
         // draw values on top
         series.setDrawValuesOnTop(true);
         series.setValuesOnTopColor(ContextCompat.getColor(context, R.color.white));
-
-        RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.history);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-        List<ExpandableListAdapter.Item> data = new ArrayList<>();
-
-        Collections.sort(months, new MonthlyRecordComparator());
-
-        for(MonthlyRecord m : months){
-            ExpandableListAdapter.Item month = new ExpandableListAdapter.Item(ExpandableListAdapter.HEADER, m.getName(), m.getAverage());
-            month.invisibleChildren = new ArrayList<>();
-            List<BpmRecord> entries = m.getEntries();
-            for(BpmRecord r : entries){
-                month.invisibleChildren.add(new ExpandableListAdapter.Item(ExpandableListAdapter.CHILD, r.getBpm(), r.getType(), r.getDate()));
-            }
-            data.add(month);
-        }
-
-        mRecyclerView.setAdapter(new ExpandableListAdapter(data));
     }
 
     @Override
     protected void onStop(){
         super.onStop();
-
-        SharedPreferences settings = getSharedPreferences(STORAGE_NAME, 0);
-        SharedPreferences.Editor editor = settings.edit();
-
-        editor.putStringSet("months",ConversionUtil.toMonthsStringSet(months));
-        for(MonthlyRecord m : months){
-            List<BpmRecord> entries = m.getEntries();
-            editor.putStringSet(m.getName(),ConversionUtil.toRecordsStringSet(entries));
-        }
-
-        editor.apply();
     }
 
-    private List<MonthlyRecord> fillHistWithGarbage(){
+    // Menu icons are inflated just as they were with actionbar
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
 
-        List<MonthlyRecord> monthsSet = new ArrayList<>();
-        MonthlyRecord oct = new MonthlyRecord("October 2016");
-        List<BpmRecord> entries = new ArrayList<>();
-        entries.add(new BpmRecord(78, "Rest", "25/10/16"));
-        entries.add(new BpmRecord(78, "Rest", "25/10/16"));
-        entries.add(new BpmRecord(78, "Rest", "22/10/16"));
-        entries.add(new BpmRecord(86, "Rest", "20/10/16"));
-        entries.add(new BpmRecord(78, "Rest", "15/10/16"));
-        entries.add(new BpmRecord(78, "Rest", "12/10/16"));
-        oct.setEntries(entries);
-        monthsSet.add(oct);
-        MonthlyRecord nov = new MonthlyRecord("November 2016");
-        entries = new ArrayList<>();
-        entries.add(new BpmRecord(75, "Rest", "30/11/16"));
-        entries.add(new BpmRecord(80, "Rest", "28/11/16"));
-        entries.add(new BpmRecord(84, "Rest", "27/11/16"));
-        entries.add(new BpmRecord(75, "Rest", "26/11/16"));
-        entries.add(new BpmRecord(72, "Rest", "25/11/16"));
-        entries.add(new BpmRecord(82, "Rest", "22/11/16"));
-        entries.add(new BpmRecord(75, "Rest", "19/11/16"));
-        entries.add(new BpmRecord(69, "Rest", "18/11/16"));
-        entries.add(new BpmRecord(77, "Rest", "17/11/16"));
-        entries.add(new BpmRecord(75, "Rest", "16/11/16"));
-        entries.add(new BpmRecord(72, "Rest", "14/11/16"));
-        entries.add(new BpmRecord(82, "Rest", "12/11/16"));
-        entries.add(new BpmRecord(75, "Rest", "11/11/16"));
-        entries.add(new BpmRecord(80, "Rest", "9/11/16"));
-        entries.add(new BpmRecord(77, "Rest", "8/11/16"));
-        entries.add(new BpmRecord(75, "Rest", "7/11/16"));
-        entries.add(new BpmRecord(72, "Rest", "5/11/16"));
-        entries.add(new BpmRecord(82, "Rest", "2/11/16"));
-        nov.setEntries(entries);
-        monthsSet.add(nov);
-        MonthlyRecord dec = new MonthlyRecord("December 2016");
-        entries = new ArrayList<>();
-        entries.add(new BpmRecord(75, "Rest", "12/12/16"));
-        entries.add(new BpmRecord(80, "Rest", "11/12/16"));
-        entries.add(new BpmRecord(77, "Rest", "9/12/16"));
-        entries.add(new BpmRecord(75, "Rest", "7/12/16"));
-        entries.add(new BpmRecord(72, "Rest", "5/12/16"));
-        entries.add(new BpmRecord(82, "Rest", "2/12/16"));
-        dec.setEntries(entries);
-        monthsSet.add(dec);
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        View v = findViewById(R.id.filterHist);
+        switch (item.getItemId()) {
+            case R.id.deleteHist:
+                // User chose the "Settings" item, show the app settings UI...
+                SharedPreferences settings = getSharedPreferences(STORAGE_NAME, 0);
+                SharedPreferences.Editor editor = settings.edit();
+                editor.clear();
+                editor.apply();
+                loadData();
+                loadViews();
+                return true;
 
-        return monthsSet;
+            case R.id.filterHist:
+                PopupMenu popup = new PopupMenu(this, v);
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        int id = item.getItemId();
+                        switch (id){
+                            case R.id.menu_all:
+                                filterState = FILTER_ALL;
+                                break;
+                            case R.id.menu_resting:
+                                filterState = FILTER_REST;
+                                break;
+                            case R.id.menu_warming_up:
+                                filterState = FILTER_WARM;
+                                break;
+                            case R.id.menu_75:
+                                filterState = FILTER_75;
+                                break;
+                            case R.id.menu_100:
+                                filterState = FILTER_100;
+                                break;
+                            case R.id.menu_after_exercise:
+                                filterState = FILTER_AFT_EX;
+                                break;
+                        }
+                        loadData();
+                        loadViews();
+                        return true;
+                    }
+                });
+                MenuInflater inflater = popup.getMenuInflater();
+                inflater.inflate(R.menu.filter_menu, popup.getMenu());
+                popup.show();
+                return true;
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+
+        }
     }
 }
 

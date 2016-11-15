@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- menu group -->
+    <group android:id="@+id/filter_group">
+        <item android:id="@+id/menu_all"
+            android:title="@string/menu_all" />
+        <item android:id="@+id/menu_resting"
+            android:title="@string/resting" />
+        <item android:id="@+id/menu_warming_up"
+            android:title="@string/warming_up" />
+        <item android:id="@+id/menu_75"
+            android:title="@string/exercise_75" />
+        <item android:id="@+id/menu_100"
+            android:title="@string/exercise_100" />
+        <item android:id="@+id/menu_after_exercise"
+            android:title="@string/after_exercise" />
+    </group>
+</menu>
