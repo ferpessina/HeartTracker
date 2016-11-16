@@ -20,6 +20,7 @@ import org.opencv.imgproc.Imgproc;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -27,12 +28,12 @@ import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.TextView;
 
 import com.example.fernandopessina.hearttracker.model.BpmRecord;
 import com.example.fernandopessina.hearttracker.utils.ConversionUtil;
 import com.example.fernandopessina.hearttracker.utils.LowPassFilter;
 import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
@@ -47,19 +48,20 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
 
     private double graphLastXValue = 5d;
     private LineGraphSeries<DataPoint> mSeries;
+    //private LineGraphSeries<DataPoint> mSeriesAvg;
+    //private BarGraphSeries<DataPoint> maxSeries;
 
     private final int GRAPH_SIZE = 80;
 
     private Mat mIntermediateMat;
     private Mat rgba;
-    private Mat gray;
-    private long last = 0;
-    private int []deltas = new int[50];
-    private int deltasIndex = 0;
-    private int deltaTAvg;
+    private Mat val;
+    //private long last = 0;
+    //private int []deltas = new int[50];
+    //private int deltasIndex = 0;
     private LowPassFilter filter = new LowPassFilter();
     private int histIndex = 0;
-    private static final int HIST_SIZE = 80;
+    private static final int HIST_SIZE = 40;
     private int [] hist = new int [HIST_SIZE];
     private long [] periods = new long[12];
     private int pIndex = 0;
@@ -67,8 +69,11 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
 
     private long currentPeakTime = 0;
     private int currentPeakVal = 0;
-
+    private double currentPeakPos=0;
     private ProgressBar progress;
+    private int thresh;
+    //private boolean calcPeak = false;
+    private int averageValueFiltered;
 
     private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -105,7 +110,14 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
 
         GraphView graph = (GraphView) findViewById(R.id.graphBpm);
         mSeries = new LineGraphSeries<>(generateData());
+//        mSeriesAvg = new LineGraphSeries<>(generateData());
+//        maxSeries = new BarGraphSeries<>();
+//        maxSeries.setSpacing(98);
+//        mSeriesAvg.setColor(ContextCompat.getColor(getApplicationContext(),R.color.colorPrimaryDark));
         graph.addSeries(mSeries);
+//        graph.addSeries(mSeriesAvg);
+//        graph.addSeries(maxSeries);
+        
         graph.getViewport().setMinX(0);
         graph.getViewport().setMaxX(GRAPH_SIZE);
         graph.getViewport().setXAxisBoundsManual(true);
@@ -151,7 +163,7 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
     public void onCameraViewStarted(int width, int height) {
         rgba = new Mat(height, width, CvType.CV_8UC4);
         mIntermediateMat = new Mat(height, width, CvType.CV_8UC4);
-        gray = new Mat(height, width, CvType.CV_8UC1);
+        val = new Mat(height, width, CvType.CV_8UC1);
     }
 
     public void onCameraViewStopped() {
@@ -171,46 +183,36 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
 
         Core.split(rgba,planes);
 
-        gray = planes.get(2);
+        val = planes.get(2);
 
-        Imgproc.equalizeHist(gray,gray);
+        Imgproc.equalizeHist(val, val);
 
-        avg = Core.mean(gray);
-
-        long now = System.currentTimeMillis();
-        long deltaT = now-last;
-        last = now;
-        deltas[deltasIndex] = (int) deltaT;
-        deltasIndex++;
-        deltasIndex%=50;
-
-        int aux = 0;
-        for(int x : deltas){
-            aux+=x;
-        }
-        aux/=50;
-        deltaTAvg = aux;
+        avg = Core.mean(val);
 
         ProgressBar avgBar = (ProgressBar) findViewById(R.id.progressBar2);
 
         int avgVal = (int)avg.val[0]*10;
         filter.put(avgVal);
 
-        final int averageValueFiltered = filter.get();
+        averageValueFiltered = filter.get();
 
-        hist[histIndex++] = averageValueFiltered;
+        histIndex++;
         histIndex %=HIST_SIZE;
+        hist[histIndex] = averageValueFiltered;
 
-        avgBar.setMax(2550);
+
         avgBar.setProgress(averageValueFiltered);
-
+        //Log.i(TAG,String.valueOf(averageValueFiltered)+" "+String.valueOf(graphLastXValue));
+        extractBpm();
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 graphLastXValue += 1d;
-                extractBpm();
+                //mSeriesAvg.appendData(new DataPoint(graphLastXValue, thresh), true, GRAPH_SIZE);
                 mSeries.appendData(new DataPoint(graphLastXValue, averageValueFiltered), true, GRAPH_SIZE);
+//                if(calcPeak)
+//                    maxSeries.appendData(new DataPoint(currentPeakPos+1,currentPeakVal),true,GRAPH_SIZE);
             }
         });
 
@@ -220,23 +222,27 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
     }
 
     private void extractBpm(){
-        int thresh=0;
+        thresh=0;
         for(int x : hist)
             thresh+=x;
         thresh/=HIST_SIZE;
-        thresh+=20;
+        thresh+=15;
 
-        int auxPointer = histIndex -1;
+        int auxPointer = histIndex-2;
         if(auxPointer<0)
             auxPointer+=HIST_SIZE;
 
         if(hist[histIndex]>thresh) {
+//            calcPeak = false;
             if(hist[histIndex]>currentPeakVal){
                 currentPeakTime = System.currentTimeMillis();
                 currentPeakVal = hist[histIndex];
+                currentPeakPos = graphLastXValue;
             }
-        }else if(hist[histIndex]<thresh && hist[auxPointer]>thresh && currentPeakTime!=0) {
+        }else if(hist[histIndex]<thresh && hist[auxPointer]>=thresh && currentPeakTime!=0) {
             long deltaT = currentPeakTime - lastPeak;
+            //Log.e(TAG,String.valueOf(thresh)+" "+String.valueOf(hist[histIndex])+" "+String.valueOf(hist[auxPointer]));
+//            calcPeak = true;
             if(lastPeak != 0){
                 if(deltaT > 400 && deltaT < 1500) {
                     periods[pIndex] = deltaT;
@@ -249,7 +255,6 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
                         perAvg+=x;
                     }
                     perAvg/=periods.length;
-                    boolean valid = true;
                     int prog = 0;
                     for(long x : periods){
                         if(x-perAvg < 50 && perAvg-x < 50) {
@@ -277,6 +282,7 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
             lastPeak = currentPeakTime;
         }else {
             currentPeakVal=0;
+//            calcPeak = false;
         }
     }
 
