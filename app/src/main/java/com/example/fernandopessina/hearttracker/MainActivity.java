@@ -182,15 +182,25 @@ public class MainActivity extends AppCompatActivity {
         graph.removeAllSeries();
         DataPoint[] points = new DataPoint[bpms.length];
         DataPoint[] points2 = new DataPoint[bpms.length];
+        int max = bpms[0],min = bpms[0];
         for(int ii=0;ii<bpms.length;ii++){
             points[ii] = new DataPoint(ii,bpms[bpms.length-1-ii]);
+            if(bpms[ii]>max){
+                max = bpms[ii];
+            }
+            if(bpms[ii]<min){
+                min = bpms[ii];
+            }
             points2[ii] = new DataPoint(ii,average);
         }
         BarGraphSeries<DataPoint> series = new BarGraphSeries<>(points);
         LineGraphSeries<DataPoint> series2 = new LineGraphSeries<>(points2);
         graph.getViewport().setXAxisBoundsManual(true);
+        graph.getViewport().setYAxisBoundsManual(true);
         graph.getViewport().setMinX(bpms.length-15);
         graph.getViewport().setMaxX(bpms.length-1);
+        graph.getViewport().setMaxY(max+5);
+        graph.getViewport().setMinY(min-5);
         // enable scaling and scrolling
         graph.getViewport().setScrollable(true); // enables horizontal scrolling
         graph.addSeries(series);

@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
+import org.opencv.android.JavaCameraView;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
@@ -24,6 +25,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
@@ -33,14 +36,13 @@ import com.example.fernandopessina.hearttracker.model.BpmRecord;
 import com.example.fernandopessina.hearttracker.utils.ConversionUtil;
 import com.example.fernandopessina.hearttracker.utils.LowPassFilter;
 import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
 public class MeasureActivity extends AppCompatActivity implements CvCameraViewListener2 {
     private static final String  TAG                 = "OCVSample::Activity";
 
-    private CameraBridgeViewBase mOpenCvCameraView;
+    private JavaCameraView mOpenCvCameraView;
 
     public static final String STORAGE_NAME = "HRHist";
 
@@ -71,6 +73,8 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
     private int currentPeakVal = 0;
     private double currentPeakPos=0;
     private ProgressBar progress;
+    private GraphView graph;
+    private boolean flashOn = false;
     private int thresh;
     //private boolean calcPeak = false;
     private int averageValueFiltered;
@@ -106,9 +110,12 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
         setContentView(R.layout.activity_measure);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbarMeasure);
-        toolbar.setTitle(getString(R.string.heartrate_measure));
+        toolbar.setTitle(getString(R.string.heart_rate_measure));
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        GraphView graph = (GraphView) findViewById(R.id.graphBpm);
+
+        graph = (GraphView) findViewById(R.id.graphBpm);
         mSeries = new LineGraphSeries<>(generateData());
 //        mSeriesAvg = new LineGraphSeries<>(generateData());
 //        maxSeries = new BarGraphSeries<>();
@@ -126,7 +133,7 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
         progress.setMax(periods.length);
         progress.setProgress(0);
 
-        mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.image_manipulations_activity_surface_view);
+        mOpenCvCameraView = (JavaCameraView) findViewById(R.id.image_manipulations_activity_surface_view);
         mOpenCvCameraView.setVisibility(CameraBridgeViewBase.VISIBLE);
         mOpenCvCameraView.setAlpha(0);
         mOpenCvCameraView.setMaxFrameSize(640,480);
@@ -191,7 +198,7 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
 
         ProgressBar avgBar = (ProgressBar) findViewById(R.id.progressBar2);
 
-        int avgVal = (int)avg.val[0]*10;
+        final int avgVal = (int)avg.val[0]*10;
         filter.put(avgVal);
 
         averageValueFiltered = filter.get();
@@ -211,6 +218,8 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
                 graphLastXValue += 1d;
                 //mSeriesAvg.appendData(new DataPoint(graphLastXValue, thresh), true, GRAPH_SIZE);
                 mSeries.appendData(new DataPoint(graphLastXValue, averageValueFiltered), true, GRAPH_SIZE);
+                graph.getViewport().setMaxY(thresh+30);
+                graph.getViewport().setMinY(thresh-70);
 //                if(calcPeak)
 //                    maxSeries.appendData(new DataPoint(currentPeakPos+1,currentPeakVal),true,GRAPH_SIZE);
             }
@@ -326,5 +335,33 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
             graphLastXValue = i;
         }
         return values;
+    }
+
+    // Menu icons are inflated just as they were with actionbar
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_measure, menu);
+        if(flashOn){
+            menu.findItem(R.id.flashToggle).setIcon(R.drawable.flash_off);
+        }else{
+            menu.findItem(R.id.flashToggle).setIcon(R.drawable.flash_on);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(flashOn){
+            flashOn = false;
+            mOpenCvCameraView.setFlash(false);
+            item.setIcon(R.drawable.flash_on);
+            return true;
+        }else{
+            flashOn = true;
+            mOpenCvCameraView.setFlash(true);
+            item.setIcon(R.drawable.flash_off);
+            return true;
+        }
     }
 }

@@ -64,6 +64,20 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
         super(context, attrs);
     }
 
+    public void setFlash(boolean flashState){
+        Camera.Parameters params = mCamera.getParameters();
+        List<String> FlashModes = params.getSupportedFlashModes();
+
+        if(FlashModes != null && FlashModes.contains(Camera.Parameters.FLASH_MODE_TORCH) && flashState){
+            params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+        }
+        if(FlashModes != null && FlashModes.contains(Camera.Parameters.FLASH_MODE_OFF) && !flashState){
+            params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+        }
+
+        mCamera.setParameters(params);
+    }
+
     protected boolean initializeCamera(int width, int height) {
         Log.d(TAG, "Initialize java camera");
         boolean result = true;
@@ -152,12 +166,13 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
                         params.setRecordingHint(true);
 
                     List<String> FocusModes = params.getSupportedFocusModes();
-                    if (FocusModes != null && FocusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO))
+                    if (FocusModes != null && FocusModes.contains(Camera.Parameters.FOCUS_MODE_FIXED))
                     {
-                        params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+                        params.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
                     }
 
                     mCamera.setParameters(params);
+
                     params = mCamera.getParameters();
 
                     mFrameWidth = params.getPreviewSize().width;
@@ -321,7 +336,7 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
         private Mat mRgba;
         private int mWidth;
         private int mHeight;
-    };
+    }
 
     private class CameraWorker implements Runnable {
 

@@ -9,7 +9,7 @@
         android:id="@+id/toolbarMeasure"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:title="@string/heartrate_measure"
+        android:title="@string/heart_rate_measure"
         android:layout_alignParentTop="true"
         android:background="?attr/colorPrimary" />
 

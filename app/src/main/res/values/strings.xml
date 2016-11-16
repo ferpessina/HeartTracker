@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">HeartTracker</string>
     <string name="title_activity_main">HeartTracker</string>
-    <string name="heartrate_measure">HeartRate Measure</string>
+    <string name="heart_rate_measure">HeartRate Measure</string>
     <string name="measureCanceled">BPM measurement canceled</string>
     <string name="measureResp1">Measured </string>
     <string name="measureResp2">BPMs</string>
@@ -15,5 +15,6 @@
     <string name="filter">Filter</string>
     <string name="menu_all">All</string>
     <string name="filter_measurements">Filter measurements</string>
+    <string name="flash_toggle">Flash On/Off</string>
 
 </resources>
