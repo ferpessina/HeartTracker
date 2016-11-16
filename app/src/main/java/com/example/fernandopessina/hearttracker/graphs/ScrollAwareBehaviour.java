@@ -9,6 +9,8 @@ import android.view.View;
 
 /**
  * Created by fernando.pessina on 09/11/2016.
+ *
+ * Defines behaviour of floating action button
  */
 
 public class ScrollAwareBehaviour extends FloatingActionButton.Behavior {

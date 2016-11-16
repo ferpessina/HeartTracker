@@ -2,6 +2,7 @@ package com.example.fernandopessina.hearttracker.model;
 
 /**
  * Created by fernando.pessina on 10/11/2016.
+ * Model for BPM records
  */
 
 public class BpmRecord {

@@ -28,7 +28,6 @@ import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
-import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -38,7 +37,6 @@ import java.util.Set;
 public class MainActivity extends AppCompatActivity {
 
     public static final String STORAGE_NAME = "HRHist";
-    private Toolbar toolbar;
     private List<MonthlyRecord> months;
     private int filterState = 0;
     private static final int FILTER_ALL = 0;
@@ -54,9 +52,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         loadData();
         loadViews();
@@ -177,23 +175,23 @@ public class MainActivity extends AppCompatActivity {
         }
         if(i>0)
             average/=i;
-        Integer []bpms = values.toArray(new Integer[0]);
+        Integer []beatsPerMinute = values.toArray(new Integer[0]);
         GraphView graph = (GraphView) findViewById(R.id.graph);
         graph.removeAllSeries();
-        DataPoint[] points = new DataPoint[bpms.length];
-        DataPoint[] points2 = new DataPoint[bpms.length];
+        DataPoint[] points = new DataPoint[beatsPerMinute.length];
+        DataPoint[] points2 = new DataPoint[beatsPerMinute.length];
         int max=0,min=0;
-        if(bpms.length>0){
-            max = bpms[0];
-            min = bpms[0];
+        if(beatsPerMinute.length>0){
+            max = beatsPerMinute[0];
+            min = beatsPerMinute[0];
         }
-        for(int ii=0;ii<bpms.length;ii++){
-            points[ii] = new DataPoint(ii,bpms[bpms.length-1-ii]);
-            if(bpms[ii]>max){
-                max = bpms[ii];
+        for(int ii=0;ii<beatsPerMinute.length;ii++){
+            points[ii] = new DataPoint(ii,beatsPerMinute[beatsPerMinute.length-1-ii]);
+            if(beatsPerMinute[ii]>max){
+                max = beatsPerMinute[ii];
             }
-            if(bpms[ii]<min){
-                min = bpms[ii];
+            if(beatsPerMinute[ii]<min){
+                min = beatsPerMinute[ii];
             }
             points2[ii] = new DataPoint(ii,average);
         }
@@ -201,8 +199,8 @@ public class MainActivity extends AppCompatActivity {
         LineGraphSeries<DataPoint> series2 = new LineGraphSeries<>(points2);
         graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setYAxisBoundsManual(true);
-        graph.getViewport().setMinX(bpms.length-15);
-        graph.getViewport().setMaxX(bpms.length-1);
+        graph.getViewport().setMinX(beatsPerMinute.length-15);
+        graph.getViewport().setMaxX(beatsPerMinute.length-1);
         graph.getViewport().setMaxY(max+5);
         graph.getViewport().setMinY(min-5);
         // enable scaling and scrolling

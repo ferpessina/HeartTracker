@@ -1,11 +1,12 @@
 package com.example.fernandopessina.hearttracker.model;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 /**
  * Created by fernando.pessina on 10/11/2016.
+ *
+ * Monthly record model
  */
 
 public class MonthlyRecord {

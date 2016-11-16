@@ -16,5 +16,8 @@
     <string name="menu_all">All</string>
     <string name="filter_measurements">Filter measurements</string>
     <string name="flash_toggle">Flash On/Off</string>
+    <string name="_80">80</string>
+    <string name="general">General</string>
+    <string name="date">date</string>
 
 </resources>

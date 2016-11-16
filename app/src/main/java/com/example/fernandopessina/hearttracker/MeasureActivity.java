@@ -50,17 +50,11 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
 
     private double graphLastXValue = 5d;
     private LineGraphSeries<DataPoint> mSeries;
-    //private LineGraphSeries<DataPoint> mSeriesAvg;
-    //private BarGraphSeries<DataPoint> maxSeries;
-
     private final int GRAPH_SIZE = 80;
 
     private Mat mIntermediateMat;
     private Mat rgba;
     private Mat val;
-    //private long last = 0;
-    //private int []deltas = new int[50];
-    //private int deltasIndex = 0;
     private LowPassFilter filter = new LowPassFilter();
     private int histIndex = 0;
     private static final int HIST_SIZE = 40;
@@ -71,12 +65,9 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
 
     private long currentPeakTime = 0;
     private int currentPeakVal = 0;
-    private double currentPeakPos=0;
-    private ProgressBar progress;
     private GraphView graph;
     private boolean flashOn = false;
     private int thresh;
-    //private boolean calcPeak = false;
     private int averageValueFiltered;
 
     private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) {
@@ -112,26 +103,22 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbarMeasure);
         toolbar.setTitle(getString(R.string.heart_rate_measure));
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
 
 
         graph = (GraphView) findViewById(R.id.graphBpm);
         mSeries = new LineGraphSeries<>(generateData());
-//        mSeriesAvg = new LineGraphSeries<>(generateData());
-//        maxSeries = new BarGraphSeries<>();
-//        maxSeries.setSpacing(98);
-//        mSeriesAvg.setColor(ContextCompat.getColor(getApplicationContext(),R.color.colorPrimaryDark));
+        mSeries.setColor(ContextCompat.getColor(getApplicationContext(),R.color.colorPrimary));
         graph.addSeries(mSeries);
-//        graph.addSeries(mSeriesAvg);
-//        graph.addSeries(maxSeries);
+
         
         graph.getViewport().setMinX(0);
         graph.getViewport().setMaxX(GRAPH_SIZE);
         graph.getViewport().setXAxisBoundsManual(true);
-
-        progress = (ProgressBar) findViewById(R.id.measureProgress);
-        progress.setMax(periods.length);
-        progress.setProgress(0);
+        graph.setBackgroundColor(ContextCompat.getColor(getApplicationContext(),R.color.darkBackground));
+        graph.getGridLabelRenderer().setVerticalLabelsVisible(false);
+        graph.getGridLabelRenderer().setHorizontalLabelsVisible(false);
+        graph.getGridLabelRenderer().setGridColor(ContextCompat.getColor(getApplicationContext(), R.color.darkBackground));
 
         mOpenCvCameraView = (JavaCameraView) findViewById(R.id.image_manipulations_activity_surface_view);
         mOpenCvCameraView.setVisibility(CameraBridgeViewBase.VISIBLE);
@@ -196,8 +183,6 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
 
         avg = Core.mean(val);
 
-        ProgressBar avgBar = (ProgressBar) findViewById(R.id.progressBar2);
-
         final int avgVal = (int)avg.val[0]*10;
         filter.put(avgVal);
 
@@ -207,21 +192,15 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
         histIndex %=HIST_SIZE;
         hist[histIndex] = averageValueFiltered;
 
-
-        avgBar.setProgress(averageValueFiltered);
-        //Log.i(TAG,String.valueOf(averageValueFiltered)+" "+String.valueOf(graphLastXValue));
         extractBpm();
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 graphLastXValue += 1d;
-                //mSeriesAvg.appendData(new DataPoint(graphLastXValue, thresh), true, GRAPH_SIZE);
                 mSeries.appendData(new DataPoint(graphLastXValue, averageValueFiltered), true, GRAPH_SIZE);
                 graph.getViewport().setMaxY(thresh+30);
                 graph.getViewport().setMinY(thresh-70);
-//                if(calcPeak)
-//                    maxSeries.appendData(new DataPoint(currentPeakPos+1,currentPeakVal),true,GRAPH_SIZE);
             }
         });
 
@@ -242,16 +221,12 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
             auxPointer+=HIST_SIZE;
 
         if(hist[histIndex]>thresh) {
-//            calcPeak = false;
             if(hist[histIndex]>currentPeakVal){
                 currentPeakTime = System.currentTimeMillis();
                 currentPeakVal = hist[histIndex];
-                currentPeakPos = graphLastXValue;
             }
         }else if(hist[histIndex]<thresh && hist[auxPointer]>=thresh && currentPeakTime!=0) {
             long deltaT = currentPeakTime - lastPeak;
-            //Log.e(TAG,String.valueOf(thresh)+" "+String.valueOf(hist[histIndex])+" "+String.valueOf(hist[auxPointer]));
-//            calcPeak = true;
             if(lastPeak != 0){
                 if(deltaT > 400 && deltaT < 1500) {
                     periods[pIndex] = deltaT;
@@ -279,7 +254,6 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
                                 prog++;
                             }
                         }
-                        this.progress.setProgress(prog);
                         if (prog > 3) {
                             float bpm = 1000f / perAvg;
                             bpm *= 60;
@@ -351,18 +325,28 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
         return true;
     }
 
+
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if(flashOn){
-            flashOn = false;
-            mOpenCvCameraView.setFlash(false);
-            item.setIcon(R.drawable.flash_on);
-            return true;
-        }else{
-            flashOn = true;
-            mOpenCvCameraView.setFlash(true);
-            item.setIcon(R.drawable.flash_off);
-            return true;
+        switch(item.getItemId()){
+            case R.id.flashToggle:
+                if (flashOn) {
+                    flashOn = false;
+                    mOpenCvCameraView.setFlash(false);
+                    item.setIcon(R.drawable.flash_on);
+                    return true;
+                } else {
+                    flashOn = true;
+                    mOpenCvCameraView.setFlash(true);
+                    item.setIcon(R.drawable.flash_off);
+                    return true;
+                }
+            case android.R.id.home:
+                finish();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 }
