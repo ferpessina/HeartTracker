@@ -182,7 +182,11 @@ public class MainActivity extends AppCompatActivity {
         graph.removeAllSeries();
         DataPoint[] points = new DataPoint[bpms.length];
         DataPoint[] points2 = new DataPoint[bpms.length];
-        int max = bpms[0],min = bpms[0];
+        int max=0,min=0;
+        if(bpms.length>0){
+            max = bpms[0];
+            min = bpms[0];
+        }
         for(int ii=0;ii<bpms.length;ii++){
             points[ii] = new DataPoint(ii,bpms[bpms.length-1-ii]);
             if(bpms[ii]>max){

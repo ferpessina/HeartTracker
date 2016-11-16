@@ -283,7 +283,8 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
                         if (prog > 3) {
                             float bpm = 1000f / perAvg;
                             bpm *= 60;
-                            saveMeasurement(bpm);
+                            if(bpm < 600 && bpm > 20)
+                                saveMeasurement(bpm);
                         }
                     }
                 }
