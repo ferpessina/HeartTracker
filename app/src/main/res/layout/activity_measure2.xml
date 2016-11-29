@@ -17,13 +17,7 @@
         android:layout_width="match_parent"
         android:layout_below="@+id/toolbarMeasure"
         android:id="@+id/graphBpm"
-        android:layout_height="100dip" />
-
-    <com.jjoe64.graphview.GraphView
-        android:layout_width="match_parent"
-        android:layout_below="@+id/graphBpm"
-        android:id="@+id/graphFFT"
-        android:layout_height="100dip" />
+        android:layout_height="160dip" />
 
     <org.opencv.android.JavaCameraView
         android:layout_width="wrap_content"
@@ -34,27 +28,14 @@
         opencv:camera_id="back"/>
 
     <TextView
-        android:text="TextView"
-        android:layout_width="wrap_content"
-        android:textSize="18sp"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/graphFFT"
-        android:background="@color/colorPrimary"
-        android:textColor="@color/white"
-        android:layout_alignParentEnd="true"
-        android:padding="10dp"
-        android:id="@+id/bpmView" />
-
-    <TextView
         android:id="@+id/radioGroupTitle"
         android:padding="10dp"
         android:background="@color/colorPrimary"
         android:textSize="18sp"
         android:textColor="@color/white"
         android:text="@string/choose_measurement_type"
-        android:layout_below="@id/graphFFT"
+        android:layout_below="@id/graphBpm"
         android:layout_width="match_parent"
-        android:layout_toLeftOf="@+id/bpmView"
         android:layout_height="wrap_content" />
 
     <LinearLayout

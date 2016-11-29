@@ -170,11 +170,16 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
                     {
                         params.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
                     }
+                    mCamera.setParameters(params);
 
+                    //Set max preview fps range
+                    params = mCamera.getParameters();
+                    List<int[]> fpsRanges = params.getSupportedPreviewFpsRange();
+                    int[] range = fpsRanges.get(fpsRanges.size()-1);
+                    params.setPreviewFpsRange(range[0],range[1]);
                     mCamera.setParameters(params);
 
                     params = mCamera.getParameters();
-
                     mFrameWidth = params.getPreviewSize().width;
                     mFrameHeight = params.getPreviewSize().height;
 

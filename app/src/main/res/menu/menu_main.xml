@@ -8,6 +8,13 @@
         android:title="@string/delete_history">
     </item>
     <item
+        android:id="@+id/useFFT"
+        android:icon="@drawable/delete"
+        app:showAsAction="never"
+        android:checkable="true"
+        android:title="@string/useFft">
+    </item>
+    <item
         android:id="@+id/filterHist"
         android:icon="@drawable/filter"
         app:showAsAction="ifRoom"

@@ -46,7 +46,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int FILTER_100 = 4;
     private static final int FILTER_AFT_EX = 5;
 
-
+    private boolean useFFT = false;
+    private FloatingActionButton fab;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,13 +60,13 @@ public class MainActivity extends AppCompatActivity {
         loadData();
         loadViews();
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab = (FloatingActionButton) findViewById(R.id.fab);
 
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Context context = getApplicationContext();
-                Intent intent = new Intent(context, MeasureActivity.class);
+                Intent intent = new Intent(context, Measure2Activity.class);
                 startActivityForResult(intent, 2);//random request code
             }
         });
@@ -231,6 +232,11 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        if(useFFT){
+            menu.findItem(R.id.useFFT).setChecked(true);
+        }else{
+            menu.findItem(R.id.useFFT).setChecked(false);
+        }
         return true;
     }
 
@@ -246,6 +252,32 @@ public class MainActivity extends AppCompatActivity {
                 editor.apply();
                 loadData();
                 loadViews();
+                return true;
+
+            case R.id.useFFT:
+                if(useFFT){
+                    useFFT = false;
+                    item.setChecked(false);
+                    fab.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Context context = getApplicationContext();
+                            Intent intent = new Intent(context, Measure2Activity.class);
+                            startActivityForResult(intent, 2);//random request code
+                        }
+                    });
+                }else{
+                    useFFT = true;
+                    item.setChecked(true);
+                    fab.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Context context = getApplicationContext();
+                            Intent intent = new Intent(context, MeasureActivity.class);
+                            startActivityForResult(intent, 2);//random request code
+                        }
+                    });
+                }
                 return true;
 
             case R.id.filterHist:

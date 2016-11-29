@@ -28,54 +28,47 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.TextView;
 
 import com.example.fernandopessina.hearttracker.model.BpmRecord;
 import com.example.fernandopessina.hearttracker.utils.ConversionUtil;
-import com.example.fernandopessina.hearttracker.utils.FftWindows;
-import com.example.fernandopessina.hearttracker.utils.GeneralFFT;
 import com.example.fernandopessina.hearttracker.utils.FirFilter;
 import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
-public class MeasureActivity extends AppCompatActivity implements CvCameraViewListener2 {
+public class Measure2Activity extends AppCompatActivity implements CvCameraViewListener2 {
     private static final String  TAG                 = "OCVSample::Activity";
 
     private JavaCameraView mOpenCvCameraView;
 
     public static final String STORAGE_NAME = "HRHist";
-    private static final int FFT_INTERVAL = 20;
+
     Scalar avg;
 
-    private GraphView graph;
-    private GraphView graphFft;
     private double graphLastXValue = 5d;
     private LineGraphSeries<DataPoint> mSeries;
-    private BarGraphSeries<DataPoint> mSeriesFFT;
     private final int GRAPH_SIZE = 80;
 
     private Mat mIntermediateMat;
     private Mat rgba;
     private Mat val;
     private FirFilter filter = new FirFilter();
-
-
     private int histIndex = 0;
-    private static final int HIST_SIZE = 256;
-    private double[] hist = new double[HIST_SIZE];
-    private double[] window = FftWindows.square(HIST_SIZE);
-    private double [] ssSpectrum = new double[HIST_SIZE/2];
-    private int maxBin;
-    private boolean initPassed = false;
+    private static final int HIST_SIZE = 40;
+    private int [] hist = new int [HIST_SIZE];
+    private long [] periods = new long[12];
+    private int pIndex = 0;
+    private long lastPeak = 0;
 
-    private long lastTime = 0;
-
+    private long currentPeakTime = 0;
+    private int currentPeakVal = 0;
+    private GraphView graph;
     private boolean flashOn = false;
-    private double bpm;
+    private int thresh;
+    private int averageValueFiltered;
 
     private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -94,7 +87,7 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
         }
     };
 
-    public MeasureActivity() {
+    public Measure2Activity() {
         Log.i(TAG, "Instantiated new " + this.getClass());
     }
 
@@ -105,7 +98,7 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        setContentView(R.layout.activity_measure);
+        setContentView(R.layout.activity_measure2);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbarMeasure);
         toolbar.setTitle(getString(R.string.heart_rate_measure));
@@ -118,11 +111,7 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
         mSeries.setColor(ContextCompat.getColor(getApplicationContext(),R.color.colorPrimary));
         graph.addSeries(mSeries);
 
-        graphFft = (GraphView) findViewById(R.id.graphFFT);
-        mSeriesFFT = new BarGraphSeries<>(updateData());
-        mSeriesFFT.setSpacing(50);
-        graphFft.addSeries(mSeriesFFT);
-        
+
         graph.getViewport().setMinX(0);
         graph.getViewport().setMaxX(GRAPH_SIZE);
         graph.getViewport().setXAxisBoundsManual(true);
@@ -130,14 +119,6 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
         graph.getGridLabelRenderer().setVerticalLabelsVisible(false);
         graph.getGridLabelRenderer().setHorizontalLabelsVisible(false);
         graph.getGridLabelRenderer().setGridColor(ContextCompat.getColor(getApplicationContext(), R.color.darkBackground));
-
-        graphFft.getViewport().setMinX(0);
-        graphFft.getViewport().setMaxX(HIST_SIZE/6);
-        graphFft.getViewport().setXAxisBoundsManual(true);
-        graphFft.setBackgroundColor(ContextCompat.getColor(getApplicationContext(),R.color.darkBackground));
-        graphFft.getGridLabelRenderer().setVerticalLabelsVisible(false);
-        graphFft.getGridLabelRenderer().setHorizontalLabelsVisible(false);
-        graphFft.getGridLabelRenderer().setGridColor(ContextCompat.getColor(getApplicationContext(), R.color.darkBackground));
 
         mOpenCvCameraView = (JavaCameraView) findViewById(R.id.image_manipulations_activity_surface_view);
         mOpenCvCameraView.setVisibility(CameraBridgeViewBase.VISIBLE);
@@ -196,58 +177,30 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
 
         Core.split(rgba,planes);
 
-        val = planes.get(2); // 1=Green BGR 2=Value HSV
+        val = planes.get(2);
 
         Imgproc.equalizeHist(val, val);
 
         avg = Core.mean(val);
 
-        filter.put(avg.val[0]*10);
+        final int avgVal = (int)avg.val[0]*10;
+        filter.put(avgVal);
+
+        averageValueFiltered = filter.get();
 
         histIndex++;
-        if(histIndex==HIST_SIZE)
-            initPassed = true;
         histIndex %=HIST_SIZE;
-        hist[histIndex] = filter.get();
-        //hist[histIndex] = avg.val[0]*10;
+        hist[histIndex] = averageValueFiltered;
 
-//        for(int i =0;i<hist.length;i++){
-//            hist[i] = Math.sin(0.1d*Math.PI*i);
-//        }
-
-        if(histIndex%FFT_INTERVAL == 0 && initPassed) {
-            double[]real = new double[HIST_SIZE];
-
-            for (int i=0,p=histIndex+1;i<HIST_SIZE;i++,p++){
-                p%=HIST_SIZE;
-                real[i]=hist[p]*window[i];
-            }
-
-            double []im = new double[HIST_SIZE];
-
-            GeneralFFT.transform(real, im);
-
-            for (int i = 0; i < HIST_SIZE/2; i++) {
-                ssSpectrum[i] = Math.sqrt(((real[i+1] * real[i+1]) + (im[i+1] * im[i+1]))/HIST_SIZE);
-            }
-        }
-
-        if(histIndex%FFT_INTERVAL == 0 && initPassed) {
-            calculateBpm();
-        }
+        extractBpm();
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 graphLastXValue += 1d;
-                mSeries.appendData(new DataPoint(graphLastXValue,hist[histIndex]),true,GRAPH_SIZE);
-                if(histIndex%FFT_INTERVAL == 0 && initPassed) {
-                    TextView bpmView = (TextView) findViewById(R.id.bpmView);
-                    bpmView.setText("Bpm: "+String.valueOf((int)bpm));
-                    mSeriesFFT.resetData(updateData());
-                }
-                //.getViewport().setMaxY(thresh+30);
-                //graph.getViewport().setMinY(thresh-70);
+                mSeries.appendData(new DataPoint(graphLastXValue, averageValueFiltered), true, GRAPH_SIZE);
+                graph.getViewport().setMaxY(thresh+30);
+                graph.getViewport().setMinY(thresh-70);
             }
         });
 
@@ -256,25 +209,64 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
         return rgba;
     }
 
-    private void calculateBpm(){
-        long currentTime = System.currentTimeMillis();
-        if(lastTime != 0){
-            double max = 0;
-            maxBin = 0;
-            for(int i=13;i<85;i++){
-                if(ssSpectrum[i]>max){
-                    maxBin = i;
-                    max = ssSpectrum[i];
+    private void extractBpm(){
+        thresh=0;
+        for(int x : hist)
+            thresh+=x;
+        thresh/=HIST_SIZE;
+        thresh+=15;
+
+        int auxPointer = histIndex-2;
+        if(auxPointer<0)
+            auxPointer+=HIST_SIZE;
+
+        if(hist[histIndex]>thresh) {
+            if(hist[histIndex]>currentPeakVal){
+                currentPeakTime = System.currentTimeMillis();
+                currentPeakVal = hist[histIndex];
+            }
+        }else if(hist[histIndex]<thresh && hist[auxPointer]>=thresh && currentPeakTime!=0) {
+            long deltaT = currentPeakTime - lastPeak;
+            if(lastPeak != 0){
+                if(deltaT > 400 && deltaT < 1500) {
+                    periods[pIndex] = deltaT;
+                    pIndex++;
+                    pIndex %= periods.length;
+
+                    long perAvg=0;
+                    long perAvgFiltered = 0;
+                    for(long x : periods){
+                        perAvg+=x;
+                    }
+                    perAvg/=periods.length;
+                    int prog = 0;
+                    for(long x : periods){
+                        if(x-perAvg < 50 && perAvg-x < 50) {
+                            perAvgFiltered+=x;
+                            prog++;
+                        }
+                    }
+                    if(prog>0) {
+                        perAvgFiltered /= prog;
+                        prog = 0;
+                        for (long x : periods) {
+                            if (x - perAvgFiltered < 20 && perAvgFiltered - x < 20) {
+                                prog++;
+                            }
+                        }
+                        if (prog > 3) {
+                            float bpm = 1000f / perAvg;
+                            bpm *= 60;
+                            if(bpm < 600 && bpm > 20)
+                                saveMeasurement(bpm);
+                        }
+                    }
                 }
             }
-            double binsAvg = (ssSpectrum[maxBin-1]+ssSpectrum[maxBin]+ssSpectrum[maxBin+1])/3;
-            double peakLocation = (maxBin*ssSpectrum[maxBin]+(maxBin-1)*ssSpectrum[maxBin-1]+(maxBin+1)*ssSpectrum[maxBin+1])/(3*binsAvg);
-            peakLocation+=0.5d;
-            long deltaT = (currentTime-lastTime)/FFT_INTERVAL;
-            lastTime = currentTime;
-            bpm = (peakLocation*60) * 1000/(deltaT*HIST_SIZE);
-        }else{
-            lastTime = currentTime;
+            lastPeak = currentPeakTime;
+        }else {
+            currentPeakVal=0;
+//            calcPeak = false;
         }
     }
 
@@ -318,14 +310,6 @@ public class MeasureActivity extends AppCompatActivity implements CvCameraViewLi
             graphLastXValue = i;
         }
         return values;
-    }
-    private DataPoint[] updateData(){
-        DataPoint[] ret = new DataPoint[HIST_SIZE/6];
-        for (int i=0;i<HIST_SIZE/6;i++){
-            DataPoint v = new DataPoint(i, ssSpectrum[i]);
-            ret[i] = v;
-        }
-        return ret;
     }
 
     // Menu icons are inflated just as they were with actionbar

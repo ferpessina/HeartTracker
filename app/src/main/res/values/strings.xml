@@ -19,5 +19,6 @@
     <string name="_80">80</string>
     <string name="general">General</string>
     <string name="date">date</string>
+    <string name="useFft">Use FFT</string>
 
 </resources>
